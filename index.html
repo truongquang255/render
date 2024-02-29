@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #ngoaihoi {
+            font-family: Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #ngoaihoi td,
+        #ngoaihoi th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #ngoaihoi tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #ngoaihoi tr:hover {
+            background-color: #ddd;
+        }
+
+        #ngoaihoi th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #04AA6D;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ngay"></div>
+    <div id="ketqua"></div>
+    <script>
+        async function App() {
+            // const currentDate = new Date().getDate();
+            const currentMonth = prompt("Nhập tháng cần tìm: ")
+            const currentYear = prompt("Nhập năm cần tìm: ")
+
+            const soNgayTrongThang = currentMonth == 4 || currentMonth == 6 || currentMonth == 9 || currentMonth == 11
+             ? 30 : (currentMonth == 1 || currentMonth == 3 || currentMonth == 5 || currentMonth == 7 || currentMonth == 8 || currentMonth == 10 || currentMonth == 12)
+             ? 31 : (currentMonth == 2 && (((currentYear % 4 == 0) && (currentYear % 100 != 0)) || (currentYear % 400 == 0))) ? 29 : 28;
+            console.log(soNgayTrongThang);
+
+            const oddUsdMonth = [];
+
+            for (let ngay = 1; ngay <= soNgayTrongThang; ngay++) {
+                const ngayAPI = `${ngay}/${currentMonth}/${currentYear}`
+
+                const url = `https://portal.vietcombank.com.vn/UserControls/TVPortal.TyGia/pListTyGia.aspx?txttungay=${ngayAPI}&BacrhID=1&isEn=False`;
+
+                await fetch(url).then(res => res.text()).then(res => {
+                    document.querySelector("#ketqua").innerHTML = res;
+                    document.querySelector("#ngay").innerHTML = `Đang tải dữ liệu ngày: ${ngayAPI}...`;
+                    const output = [];
+
+                    const rows = document.querySelectorAll(".odd");
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const element = rows[i];
+                        const cells = element.cells;
+                        const odd = [ngayAPI];
+
+                        for (let j = 0; j < cells.length; j++) {
+                            const element = cells[j];
+                            odd.push(element.innerHTML);
+
+                        }
+                        output.push(odd)
+
+                    }
+
+                    const oddUSD = (output.find(item => item[2] === "USD") || []).map(item => item.trim());
+
+                    oddUsdMonth.push(oddUSD);
+                })
+            }
+
+            document.querySelector("#ngay").innerHTML = ``;
+
+
+            oddUsdMonth.sort((a, b) => a[0] - b[0]);
+
+            let html = `<table id="ngoaihoi">
+                <tr>
+                    <th>Ngày</th>
+                    <th>Tên ngoại tệ</th>
+                    <th>Mã ngoại tệ</th>
+                    <th>Mua (Tiền mặt)</th>
+                    <th>Mua (Chuyển khoản)</th>
+                    <th>Bán</th>
+                </tr>`;
+            oddUsdMonth.forEach(day => {
+                let htmlday = "<tr>"
+                day.forEach(item => {
+                    htmlday += `<td>${item}</td>`;
+                })
+                htmlday += "</tr>";
+
+                html += htmlday;
+            })
+
+            html += "</table>"
+
+
+            document.querySelector("#ketqua").innerHTML = html
+        }
+
+        App();
+
+    </script>
+</body>
+
+</html>
